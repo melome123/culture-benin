@@ -1,31 +1,53 @@
-# Utiliser PHP 8.3 avec Apache
-FROM php:8.3-apache
+# -----------------------
+# Stage 1 : build frontend (Vite)
+# -----------------------
+FROM node:20 AS node-builder
 
-# Installer les extensions nécessaires
+WORKDIR /app
+
+# Copier package.json et package-lock.json
+COPY package*.json ./
+
+# Installer les dépendances frontend
+RUN npm install
+
+# Copier le reste des fichiers frontend (resources/js, etc.)
+COPY resources/ resources/
+
+# Builder les assets Vite
+RUN npm run build
+
+# -----------------------
+# Stage 2 : backend Laravel
+# -----------------------
+FROM php:8.3-fpm
+
+# Installer extensions PHP et utilitaires
 RUN apt-get update && apt-get install -y \
-    git unzip libpq-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_mysql zip
-
-# Activer mod_rewrite pour Laravel
-RUN a2enmod rewrite
-
-# Définir le répertoire de travail
-WORKDIR /var/www/html
-
-# Copier le projet dans le conteneur
-COPY . .
+    git unzip curl libonig-dev libzip-dev zip \
+    && docker-php-ext-install pdo pdo_pgsql mbstring zip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Installer Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Installer les dépendances Laravel (sans les dev)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+WORKDIR /var/www/html
 
-# Générer les assets frontend si tu utilises Vite
-RUN npm install && npm run build
+# Copier tout le projet Laravel
+COPY . .
 
-# Exposer le port Railway
-EXPOSE 80
+# Copier les assets frontend buildés depuis l'étape Node
+COPY --from=node-builder /app/dist public/
 
-# Commande de démarrage
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
+# Installer dépendances PHP
+RUN composer install --optimize-autoloader --no-dev
+
+# Générer clé Laravel et créer storage link
+RUN php artisan key:generate
+RUN php artisan storage:link
+
+# Exposer le port PHP-FPM
+EXPOSE 9000
+
+# Lancer PHP-FPM
+CMD ["php-fpm"]
