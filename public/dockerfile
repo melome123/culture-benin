@@ -1,53 +1,24 @@
-# -----------------------
-# Stage 1 : Build frontend
-# -----------------------
+# Stage 1 : build frontend
 FROM node:20 AS node-builder
-
 WORKDIR /app
-
-# Copier package.json et package-lock.json
 COPY package*.json ./
-
-# Installer les dépendances frontend
 RUN npm install
-
-# Copier le reste des fichiers frontend (resources/js, etc.)
 COPY resources/ resources/
-
-# Builder les assets Vite
 RUN npm run build
 
-# -----------------------
-# Stage 2 : Build backend Laravel
-# -----------------------
+# Stage 2 : backend Laravel
 FROM php:8.2-fpm
-
-# Installer extensions PHP et utilitaires
-RUN apt-get update && apt-get install -y \
-    git unzip libonig-dev libzip-dev zip curl \
+RUN apt-get update && apt-get install -y git unzip libonig-dev libzip-dev zip curl \
     && docker-php-ext-install pdo pdo_pgsql mbstring zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Définir le répertoire de travail
 WORKDIR /var/www/html
-
-# Copier tout le projet Laravel
 COPY . .
-
-# Copier les assets frontend buildés depuis l'étape Node
 COPY --from=node-builder /app/dist public/
 
-# Installer les dépendances PHP
 RUN composer install --optimize-autoloader --no-dev
-
-# Générer clé Laravel et créer storage link
 RUN php artisan key:generate && php artisan storage:link
 
-# Exposer le port PHP-FPM
 EXPOSE 9000
-
-# Lancer PHP-FPM
 CMD ["php-fpm"]
