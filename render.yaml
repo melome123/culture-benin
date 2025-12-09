@@ -1,8 +1,17 @@
-databases:
-  - name: culture-postgres
-    plan: free
-
 services:
+  - type: pserv
+    name: culture-postgres
+    plan: free
+    runtime: postgres
+    version: 15
+    envVars:
+      - key: POSTGRES_DB
+        value: culture
+      - key: POSTGRES_USER
+        value: culture_user
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+
   - type: web
     name: culture-benin
     env: php
