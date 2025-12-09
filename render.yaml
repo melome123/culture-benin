@@ -18,8 +18,6 @@ services:
       npm install
       npm run build
 
-    # startCommand supprimé pour Docker runtime
-
     envVars:
       - key: APP_ENV
         value: production
@@ -37,7 +35,6 @@ services:
         value: pgsql
 
       - key: DATABASE_URL
-        fromService:
+        fromDatabase:
           name: culture-postgres
-          type: pgsql
           property: connectionString
