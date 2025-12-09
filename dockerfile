@@ -5,18 +5,18 @@ FROM node:20 AS node-builder
 
 WORKDIR /app
 
-# Copier package.json, package-lock.json et vite.config.js
+# Copier fichiers de config Node
 COPY package*.json vite.config.js ./
 
-# Copier les dossiers frontend
-COPY resources/js ./resources/js
-COPY resources/css ./resources/css
+# Copier tout le frontend
+COPY resources ./resources
 
 # Installer dépendances Node
 RUN npm install
 
-# Builder les assets Vite pour Laravel
+# Builder assets Vite
 RUN npm run build
+
 
 # -----------------------
 # Stage 2 : backend Laravel
