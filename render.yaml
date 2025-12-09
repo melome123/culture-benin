@@ -39,5 +39,5 @@ services:
       - key: DATABASE_URL
         fromService:
           name: culture-postgres
-          type: postgres
+          type: pgsql
           property: connectionString
