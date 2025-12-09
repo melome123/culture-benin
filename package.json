@@ -38,6 +38,7 @@
         "datatables.net-bs5": "^2.3.5",
         "datepicker": "^0.0.0",
         "flatpickr": "^4.6.13",
+        "inertiajs": "^0.0.0",
         "jquery": "^3.7.1",
         "jsvectormap": "^1.7.0",
         "prismjs": "^1.30.0",
