@@ -10,13 +10,9 @@ services:
     runtime: docker
     plan: free
 
+    # Build command exécuté par Render (optionnel si tout est dans Dockerfile)
     buildCommand: |
-      composer install --optimize-autoloader --no-dev
-      php artisan key:generate
-      php artisan storage:link
-      php artisan migrate --force
-      npm install
-      npm run build
+      echo "Docker build handled automatically"
 
     envVars:
       - key: APP_ENV
