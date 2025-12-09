@@ -10,7 +10,7 @@ services:
     runtime: docker
     plan: free
 
-    # Build command optionnel, Dockerfile gère tout
+    # Pas besoin de startCommand, Dockerfile gère tout
     buildCommand: |
       echo "Docker build handled by Dockerfile"
 
