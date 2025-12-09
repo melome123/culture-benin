@@ -1,4 +1,3 @@
-import '../../public/assets/css/style.css';
 import '../css/app.css';
 import './bootstrap';
 
