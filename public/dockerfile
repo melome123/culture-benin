@@ -1,24 +1,29 @@
-# Stage 1 : build frontend
-FROM node:20 AS node-builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY resources/ resources/
-RUN npm run build
-
-# Stage 2 : backend Laravel
 FROM php:8.2-fpm
-RUN apt-get update && apt-get install -y git unzip libonig-dev libzip-dev zip curl \
+
+# Installer utilitaires et extensions PHP
+RUN apt-get update && apt-get install -y \
+    git unzip curl libonig-dev libzip-dev zip \
     && docker-php-ext-install pdo pdo_pgsql mbstring zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Installer Node.js (version 20) et npm correctement
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
+# Vérifier l’installation
+RUN node -v
+RUN npm -v
+
+# Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
 COPY . .
-COPY --from=node-builder /app/dist public/
 
+# Installer dépendances backend et frontend
 RUN composer install --optimize-autoloader --no-dev
 RUN php artisan key:generate && php artisan storage:link
+RUN npm install && npm run build
 
 EXPOSE 9000
 CMD ["php-fpm"]
