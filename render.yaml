@@ -1,21 +1,15 @@
-services:
-  - type: pserv
-    name: culture-postgres
+databases:
+  - name: culture-postgres
     plan: free
-    runtime: postgres
-    version: 15
-    envVars:
-      - key: POSTGRES_DB
-        value: culture
-      - key: POSTGRES_USER
-        value: culture_user
-      - key: POSTGRES_PASSWORD
-        generateValue: true
+    databaseName: culture
+    user: culture_user
 
+services:
   - type: web
     name: culture-benin
     env: php
     plan: free
+
     buildCommand: |
       composer install --optimize-autoloader --no-dev
       php artisan key:generate
@@ -23,7 +17,9 @@ services:
       php artisan migrate --force
       npm install
       npm run build
+
     startCommand: php -S 0.0.0.0:$PORT -t public
+
     envVars:
       - key: APP_ENV
         value: production
