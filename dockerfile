@@ -5,26 +5,27 @@ FROM node:20 AS node-builder
 
 WORKDIR /app
 
-# Copier package.json et package-lock.json
-COPY package*.json ./
+# Copier package.json, package-lock.json et vite.config.js
+COPY package*.json vite.config.js ./
 
-# Installer les dépendances frontend
+# Copier les dossiers frontend
+COPY resources/js ./resources/js
+COPY resources/css ./resources/css
+
+# Installer dépendances Node
 RUN npm install
 
-# Copier le reste des fichiers frontend (resources/js, etc.)
-COPY resources/ resources/
-
-# Builder les assets Vite
+# Builder les assets Vite pour Laravel
 RUN npm run build
 
 # -----------------------
 # Stage 2 : backend Laravel
+# -----------------------
 FROM php:8.3-fpm
 
 # Installer extensions PHP et utilitaires
 RUN apt-get update && apt-get install -y \
-    git unzip curl libonig-dev libzip-dev zip \
-    libpq-dev \
+    git unzip curl libonig-dev libzip-dev zip libpq-dev \
     && docker-php-ext-install pdo pdo_pgsql mbstring zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -36,8 +37,8 @@ WORKDIR /var/www/html
 # Copier tout le projet Laravel
 COPY . .
 
-# Copier les assets frontend buildés depuis l'étape Node
-COPY --from=node-builder /app/dist public/
+# Copier les assets buildés depuis l'étape Node
+COPY --from=node-builder /app/public/build ./public/build
 
 # Installer dépendances PHP
 RUN composer install --optimize-autoloader --no-dev
