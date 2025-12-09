@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import 'datatables.net-bs5';
-import '../../public/assets/css/style.css';
 import '../css/app.css';
 import './bootstrap';
 import '../css/style.css';
