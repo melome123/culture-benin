@@ -1,7 +1,7 @@
-# Étape 1 : Base PHP avec extensions nécessaires
+# Base PHP avec FPM
 FROM php:8.2-fpm
 
-# Installer utilitaires et extensions PHP
+# Installer dépendances système et extensions PHP
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -12,23 +12,27 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_pgsql mbstring zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Installer Node.js et npm (version 20)
+# Installer Node.js et npm
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-# Installer Composer depuis l'image officielle
+# Vérifier Node.js et npm
+RUN node -v
+RUN npm -v
+
+# Installer Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Définir le répertoire de travail
 WORKDIR /var/www/html
 
-# Copier tous les fichiers du projet
+# Copier les fichiers du projet
 COPY . .
 
 # Installer les dépendances PHP
 RUN composer install --optimize-autoloader --no-dev
 
-# Générer la clé Laravel et créer le lien storage
+# Générer la clé Laravel et créer le storage link
 RUN php artisan key:generate \
     && php artisan storage:link
 
@@ -38,5 +42,5 @@ RUN npm install && npm run build
 # Exposer le port pour PHP-FPM
 EXPOSE 9000
 
-# Commande par défaut
+# Démarrer PHP-FPM
 CMD ["php-fpm"]
