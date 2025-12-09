@@ -37,20 +37,24 @@ services:
         value: pgsql
 
       - key: DB_HOST
-        fromService: culture-postgres
-        property: host
+        fromService:
+          name: culture-postgres
+          property: host
 
       - key: DB_PORT
-        fromService: culture-postgres
-        property: port
+        fromService:
+          name: culture-postgres
+          property: port
 
       - key: DB_DATABASE
         value: culture
 
       - key: DB_USERNAME
-        fromService: culture-postgres
-        property: user
+        fromService:
+          name: culture-postgres
+          property: user
 
       - key: DB_PASSWORD
-        fromService: culture-postgres
-        property: password
+        fromService:
+          name: culture-postgres
+          property: password
