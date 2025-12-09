@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: culture-benin
+    env: php
+    plan: free
+    buildCommand: |
+      composer install --optimize-autoloader --no-dev
+      php artisan key:generate
+      php artisan storage:link
+      php artisan migrate --force
+      npm install
+      npm run build
+    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromService: mysql
+        property: host
+      - key: DB_PORT
+        fromService: mysql
+        property: port
+      - key: DB_DATABASE
+        value: culture
+      - key: DB_USERNAME
+        fromService: mysql
+        property: user
+      - key: DB_PASSWORD
+        fromService: mysql
+        property: password
+
+databases:
+  - name: mysql
+    plan: free
+    region: frankfurt
