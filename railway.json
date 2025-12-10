@@ -1,11 +1,12 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "sh -c \"php-fpm && nginx -g 'daemon off;'\"",
-    "restartPolicyType": "ALWAYS"
+    "startCommand": "/usr/bin/supervisord -c /etc/supervisord.conf",
+    "restartPolicyType": "ALWAYS",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 30
   }
 }
