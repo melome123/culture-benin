@@ -1,7 +1,13 @@
 #!/bin/sh
+set -e
 
-# Démarrer PHP-FPM en arrière-plan
+echo "🚀 Starting PHP-FPM..."
 php-fpm &
 
-# Démarrer Nginx en premier plan
-nginx -g 'daemon off;'
+echo "⏳ Waiting for PHP-FPM to start..."
+sleep 3
+
+echo "🌐 Starting Nginx on port ${PORT:-8080}..."
+echo "✅ Application is ready!"
+
+exec nginx -g "daemon off;"
