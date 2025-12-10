@@ -1,6 +1,6 @@
 FROM php:8.3-cli
 
-# Installer extensions PHP
+# Installer uniquement les dépendances ESSENTIELLES
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -8,13 +8,9 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libpq-dev \
     libzip-dev \
+    libonig-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo \
-        pdo_pgsql \
-        mbstring \
-        gd \
-        zip \
+    && docker-php-ext-install pdo pdo_pgsql mbstring gd zip \
     && apt-get clean
 
 # Installer Composer
@@ -23,17 +19,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# SUPPRIMER ARTISAN et le remplacer par notre propre script
-RUN rm -f artisan && \
-    echo '#!/bin/sh' > artisan && \
-    echo 'echo "Starting Laravel on port 8080..."' >> artisan && \
-    echo 'php artisan serve --host=0.0.0.0 --port=8080' >> artisan && \
-    chmod +x artisan
-
+# Installer dépendances
 RUN composer install --optimize-autoloader --no-scripts --no-interaction
+
+# Permissions
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
 
-# Démarrer le serveur
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+# Démarrer le serveur PHP intégré (LE PLUS SIMPLE!)
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
