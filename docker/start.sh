@@ -1,10 +1,13 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
-# Générer la clé d'application Laravel si elle n'existe pas
-if [ ! -f ".env" ]; then
-    cp .env.example .env
-    php artisan key:generate
-fi
+echo "🚀 Starting PHP-FPM..."
+php-fpm &
 
-# Démarrer le serveur PHP pour Railway
-php -S 0.0.0.0:8080 -t public
+echo "⏳ Waiting for PHP-FPM to start..."
+sleep 3
+
+echo "🌐 Starting Nginx on port ${PORT:-8080}..."
+echo "✅ Application is ready!"
+
+exec nginx -g "daemon off;"

@@ -33,30 +33,41 @@ RUN docker-php-ext-install \
 # 3. Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+
+
 # 4. Répertoire de travail
 WORKDIR /var/www/html
 
-# 5. Copier UNIQUEMENT les fichiers de Composer d'abord
+# 5. Copier les fichiers de configuration d'abord (pour meilleur cache Docker)
 COPY composer.json composer.lock ./
 
-# 6. Installer les dépendances (sans exécuter de scripts Laravel)
-RUN composer install --optimize-autoloader --no-scripts --no-interaction
+# 6. Installer dépendances Composer (sans dev pour production)
+RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interaction
 
-# 7. Copier TOUTE l'application
+# 7. Copier le reste de l'application
 COPY . .
 
-# 8. Configurer les permissions et générer les caches (si nécessaire)
-RUN chmod -R 775 storage bootstrap/cache
+# ... (toutes les étapes précédentes restent les mêmes jusqu'à l'étape 7)
 
-# 9. Copier la configuration PHP
-COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
+# 8. Créer un script de démarrage
+RUN echo '#!/bin/bash\n\
+\n\
+# Désactiver le lancement automatique de Laravel Serve\n\
+export LARAVEL_SAIL=0\n\
+\n\
+# Générer la clé si nécessaire\n\
+if [ ! -f ".env" ]; then\n\
+    cp .env.example .env\n\
+    php artisan key:generate\n\
+fi\n\
+\n\
+# Démarrer le serveur PHP\n\
+exec php -S 0.0.0.0:8080 -t public\n\
+' > /usr/local/bin/start.sh && \
+chmod +x /usr/local/bin/start.sh
 
-# 10. Copier le script de démarrage
-COPY docker/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
-# 11. Exposer le port
+# 9. Exposer le port
 EXPOSE 8080
 
-# 12. Démarrer l'application
+# 10. Utiliser le script de démarrage
 CMD ["/usr/local/bin/start.sh"]
