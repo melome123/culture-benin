@@ -1,55 +1,31 @@
-# -----------------------------------------
-# Stage 1 : Build Frontend (Vite)
-# -----------------------------------------
-FROM node:20 AS node-builder
+FROM php:8.3-cli
+
 WORKDIR /app
 
-COPY package*.json vite.config.js ./
-RUN npm install
-
-COPY resources ./resources
-RUN npm run build
-
-
-# -----------------------------------------
-# Stage 2 : Install PHP dependencies
-# -----------------------------------------
-FROM php:8.3-fpm AS php-builder
-
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    zip unzip git curl libpq-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_pgsql zip
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libpq-dev \
+    zip \
+    unzip
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath
 
-WORKDIR /var/www/html
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-COPY composer.json ./
-COPY composer.lock ./
-RUN composer install --no-dev --prefer-dist --optimize-autoloader || true
-
-
-# -----------------------------------------
-# Stage 3 : Final Image (Laravel + Nginx)
-# -----------------------------------------
-FROM nginx:alpine
-
-# Copier la config Nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Installer PHP-FPM 8.3
-RUN apk add --no-cache php83 php83-fpm php83-opcache php83-pdo_pgsql php83-tokenizer php83-xml php83-mbstring php83-zip
-
-# Copier Laravel
-WORKDIR /var/www/html
+# Copy application
 COPY . .
-COPY --from=node-builder /app/resources ./resources
-COPY --from=node-builder /app/dist ./public/build
-COPY --from=php-builder /var/www/html/vendor ./vendor
 
-# Droits
-RUN chown -R nginx:nginx /var/www/html
+# Install dependencies
+RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
-EXPOSE 80
+# Expose port
+EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
