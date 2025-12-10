@@ -33,6 +33,13 @@ RUN docker-php-ext-install \
 # 3. Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# ... après COPY . .
+
+# Désactiver les scripts Composer qui pourraient lancer artisan serve
+RUN composer install --optimize-autoloader --no-scripts --no-interaction
+
+# ... reste du Dockerfile
+
 # 4. Répertoire de travail
 WORKDIR /var/www/html
 
