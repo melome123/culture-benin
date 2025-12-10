@@ -18,9 +18,9 @@ RUN echo 'memory_limit = 256M' > /usr/local/etc/php/conf.d/memory.ini && \
     echo 'upload_max_filesize = 20M' >> /usr/local/etc/php/conf.d/memory.ini && \
     echo 'post_max_size = 20M' >> /usr/local/etc/php/conf.d/memory.ini
 
-# Configuration Nginx (directement dans le Dockerfile)
+# Configuration Nginx (inline)
 RUN echo 'server {' > /etc/nginx/http.d/default.conf && \
-    echo '    listen 8080;' >> /etc/nginx/http.d/default.conf && \
+    echo '    listen ${PORT:-8080};' >> /etc/nginx/http.d/default.conf && \
     echo '    server_name _;' >> /etc/nginx/http.d/default.conf && \
     echo '    root /var/www/html/public;' >> /etc/nginx/http.d/default.conf && \
     echo '    index index.php index.html;' >> /etc/nginx/http.d/default.conf && \
@@ -58,8 +58,13 @@ RUN chown -R www-data:www-data /var/www/html/storage && \
     chmod -R 775 /var/www/html/storage && \
     chmod -R 775 /var/www/html/bootstrap/cache
 
+# **IMPORTANT : Supprimer artisan ou le renommer temporairement pour empêcher Railway de l'exécuter**
+RUN mv artisan artisan.bak
+
 # Script de démarrage
 RUN echo '#!/bin/sh' > /start.sh && \
+    echo 'export PORT=${PORT:-8080}' >> /start.sh && \
+    echo '' >> /start.sh && \
     echo '# Démarrer PHP-FPM en arrière-plan' >> /start.sh && \
     echo 'php-fpm &' >> /start.sh && \
     echo '' >> /start.sh && \
@@ -70,8 +75,8 @@ RUN echo '#!/bin/sh' > /start.sh && \
     echo 'nginx -g "daemon off;"' >> /start.sh && \
     chmod +x /start.sh
 
-# Exposer le port
-EXPOSE 8080
+# Exposer le port (utiliser la variable PORT de Railway)
+EXPOSE ${PORT:-8080}
 
-# Commande de démarrage
+# **TRÈS IMPORTANT : Spécifier explicitement la commande CMD**
 CMD ["/start.sh"]
