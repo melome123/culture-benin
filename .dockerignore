@@ -9,5 +9,4 @@ README.md
 *.log
 *.md
 Dockerfile*
-docker/
 tests/
