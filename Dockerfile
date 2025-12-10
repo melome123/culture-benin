@@ -45,18 +45,27 @@ RUN composer install --optimize-autoloader --no-dev --no-scripts --no-interactio
 # 7. Copier le reste de l'application
 COPY . .
 
-# 8. Configurer les permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 775 storage bootstrap/cache
+# ... (toutes les étapes précédentes restent les mêmes jusqu'à l'étape 7)
 
-# 9. Copier la configuration PHP pour production
-COPY docker/php.ini /usr/local/etc/php/conf.d/custom.ini
+# 8. Créer un script de démarrage
+RUN echo '#!/bin/bash\n\
+\n\
+# Désactiver le lancement automatique de Laravel Serve\n\
+export LARAVEL_SAIL=0\n\
+\n\
+# Générer la clé si nécessaire\n\
+if [ ! -f ".env" ]; then\n\
+    cp .env.example .env\n\
+    php artisan key:generate\n\
+fi\n\
+\n\
+# Démarrer le serveur PHP\n\
+exec php -S 0.0.0.0:8080 -t public\n\
+' > /usr/local/bin/start.sh && \
+chmod +x /usr/local/bin/start.sh
 
-# 10. Exposer le port (Railway utilise le port 8080 par défaut)
+# 9. Exposer le port
 EXPOSE 8080
 
-# 11. Script de démarrage pour Railway
-COPY docker/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
-
+# 10. Utiliser le script de démarrage
 CMD ["/usr/local/bin/start.sh"]
