@@ -104,4 +104,4 @@ RUN chown -R www-data:www-data /var/www/html && \
 EXPOSE ${PORT:-8080}
 
 # ===== ÉTAPE 14: COMMANDE DE DÉMARRAGE =====
-CMD ["/usr/local/bin/start.sh"]
+CMD ["./docker/start.sh"]
