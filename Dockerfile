@@ -1,5 +1,4 @@
-# Utiliser Apache au lieu de Nginx
-FROM php:8.3-apache
+FROM php:8.3-cli
 
 # Installer extensions PHP
 RUN apt-get update && apt-get install -y \
@@ -16,37 +15,25 @@ RUN apt-get update && apt-get install -y \
         mbstring \
         gd \
         zip \
-        opcache \
     && apt-get clean
 
 # Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Activer mod_rewrite pour Laravel
-RUN a2enmod rewrite
-
-# Configurer Apache pour Laravel
-RUN echo '<VirtualHost *:8080>' > /etc/apache2/sites-available/000-default.conf && \
-    echo '  DocumentRoot /var/www/html/public' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '  <Directory /var/www/html/public>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    AllowOverride All' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '    Require all granted' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '  </Directory>' >> /etc/apache2/sites-available/000-default.conf && \
-    echo '</VirtualHost>' >> /etc/apache2/sites-available/000-default.conf
-
-# Changer le port d'écoute d'Apache
-RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf
-
 WORKDIR /var/www/html
 COPY . .
 
-# Supprimer artisan
-RUN rm -f artisan
+# SUPPRIMER ARTISAN et le remplacer par notre propre script
+RUN rm -f artisan && \
+    echo '#!/bin/sh' > artisan && \
+    echo 'echo "Starting Laravel on port 8080..."' >> artisan && \
+    echo 'php artisan serve --host=0.0.0.0 --port=8080' >> artisan && \
+    chmod +x artisan
 
 RUN composer install --optimize-autoloader --no-scripts --no-interaction
 RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
 
-# Démarrer Apache
-CMD ["apache2-foreground"]
+# Démarrer le serveur
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
