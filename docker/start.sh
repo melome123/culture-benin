@@ -6,10 +6,5 @@ if [ ! -f ".env" ]; then
     php artisan key:generate
 fi
 
-# Configurer le cache
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
 # Démarrer le serveur PHP pour Railway
 php -S 0.0.0.0:8080 -t public
