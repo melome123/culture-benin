@@ -1,3 +1,13 @@
-vendor/
+.git/
 node_modules/
-.git
+vendor/
+storage/*.key
+.env
+docker-compose.yml
+.gitignore
+README.md
+*.log
+*.md
+Dockerfile*
+docker/
+tests/
