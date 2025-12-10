@@ -1,31 +1,61 @@
-FROM php:8.3-cli
+# Dockerfile - Placez ce fichier à la racine de votre projet
 
-WORKDIR /app
+FROM php:8.3-fpm-alpine
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Installer les dépendances système
+RUN apk update && apk add --no-cache \
+    bash \
     git \
     curl \
     libpng-dev \
-    libonig-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
     libxml2-dev \
-    libpq-dev \
     zip \
-    unzip
+    unzip \
+    postgresql-dev \
+    libzip-dev \
+    oniguruma-dev \
+    nodejs \
+    npm
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql mbstring exif pcntl bcmath
+# Installer les extensions PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-install \
+    pdo \
+    pdo_pgsql \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    opcache
 
-# Install Composer
+# Installer Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy application
+# Définir le répertoire de travail
+WORKDIR /var/www/html
+
+# Copier les fichiers de configuration PHP
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+
+# Copier les fichiers de l'application
 COPY . .
 
-# Install dependencies
+# Installer les dépendances Composer
 RUN composer install --optimize-autoloader --no-scripts --no-interaction
 
-# Expose port
-EXPOSE 8080
+# Installer les dépendances NPM (si nécessaire)
+RUN npm install && npm run build
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+# Définir les permissions
+RUN chown -R www-data:www-data /var/www/html/storage
+RUN chown -R www-data:www-data /var/www/html/bootstrap/cache
+
+# Exposer le port
+EXPOSE 9000
+
+CMD ["php-fpm"]
