@@ -1,16 +1,24 @@
-# Stage 1 : build frontend (Vite)
-FROM node:20 AS node-builder
-WORKDIR /app
+# Étape 1 — Build PHP + Composer
+FROM php:8.3-fpm
 
-# Copier package.json + vite.config.js
-COPY package*.json vite.config.js ./
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    zip unzip git libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql
 
-# Installer dépendances
-RUN npm install
+# Installer Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copier le frontend
-COPY resources ./resources
-# Ne pas copier 'src' si il n'existe pas
+WORKDIR /var/www/html
 
-# Builder assets
-RUN npm run build
+COPY . .
+
+# Installer dépendances Laravel
+RUN composer install --no-dev --optimize-autoloader
+
+# Donner les permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+EXPOSE 9000
+
+CMD ["php-fpm"]
