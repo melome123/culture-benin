@@ -1,9 +1,3 @@
-[phases.setup]
-aptPkgs = [
-  "php83Extensions.pdo_mysql",
-  "php83Extensions.mysqlnd"
-]
-
 [phases.install]
 cmds = [
   "composer install --no-dev --optimize-autoloader",
@@ -13,8 +7,7 @@ cmds = [
 [phases.build]
 cmds = [
   "npm run build",
-  "php artisan optimize",
-  "php artisan view:clear"
+  "php artisan optimize"
 ]
 
 [start]
