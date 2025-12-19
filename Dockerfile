@@ -1,43 +1,44 @@
-# Utiliser l'image PHP officielle
 FROM php:8.3-cli
 
-# 1. Installer les dépendances SYSTEME
+# 1. Dépendances système
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
     libxml2-dev \
-    libpq-dev \
     libzip-dev \
     libonig-dev \
+    default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Configurer et installer extensions PHP
+# 2. Extensions PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install \
     pdo \
-    pdo_pgsql \
+    pdo_mysql \
+    mysqli \
     mbstring \
     gd \
     zip
 
-# 3. Installer Composer
+# 3. Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# 4. Répertoire de travail
+# 4. Workdir
 WORKDIR /var/www/html
 
-# 5. Copier l'application
+# 5. App
 COPY . .
 
-# 6. Installer dépendances Composer
-RUN composer install --optimize-autoloader --no-scripts --no-interaction
+# 6. Composer install
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # 7. Permissions
 RUN chmod -R 775 storage bootstrap/cache
 
-# 8. Exposer le port
+# 8. Port
 EXPOSE 8080
 
-# 9. Démarrer DIRECTEMENT le serveur PHP (PAS de script)
+# 9. Serveur
 CMD ["php", "-S", "0.0.0.0:8080", "-t", "public"]
+
